@@ -5,6 +5,7 @@ import java.awt.Color;
 public class Player {
 	
 	private Color playerColor;
+	private int playerId;
 	private Piece[] pieces = new Piece[4];
 
 	public Player() {
@@ -14,15 +15,19 @@ public class Player {
 	public Player(Color color) {
 		Board.initpieceOrigin();
 		if(color == Color.YELLOW) {
+			this.playerId = 0;
 			this.initiateYellow();
 		}
 		else if (color == Color.GREEN) {
+			this.playerId = 1;
 			this.initiateGreen();
 		}
 		else if (color == Color.RED) {
+			this.playerId = 2;
 			this.initiateRed();
 		}
 		else {
+			this.playerId = 3;
 			this.initiateBlue();
 		}
 	}
@@ -77,6 +82,9 @@ public class Player {
 	public Piece getPiece(int index) {
 		return pieces[index];
 	}
-	
+
+	public int getPlayerId() {
+		return playerId;
+	}
 
 }

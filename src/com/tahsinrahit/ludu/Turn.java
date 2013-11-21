@@ -1,12 +1,16 @@
 package com.tahsinrahit.ludu;
 
 import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.security.SecureRandom;
 import java.security.SecureRandomSpi;
 import java.util.Random;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -16,6 +20,7 @@ public class Turn implements MouseListener{
 	private Player player;
 	private Piece currentPiece;
 	private boolean isPieceSelected = true;
+	private int diceValue = 0;
 
 	public Turn() {
 		
@@ -23,15 +28,15 @@ public class Turn implements MouseListener{
 
 	public Turn(Player player) {
 		this.player = player;
-		this.currentPiece = new Piece();
+		this.currentPiece = null;
 	}
 
 	public int rollDice() {
-		int diceValue = new SecureRandom().nextInt(7);
+		this.diceValue = new SecureRandom().nextInt(7);
 		while(diceValue == 0) {
-			diceValue = new SecureRandom().nextInt(7);
+			this.diceValue = new SecureRandom().nextInt(7);
 		}
-		return diceValue;
+		return this.diceValue;
 	}
 	
 	
@@ -43,12 +48,35 @@ public class Turn implements MouseListener{
 		pieces[1].addMouseListener(this);
 		pieces[2].addMouseListener(this);
 		pieces[3].addMouseListener(this);
+
+		synchronized (this) {
+			//System.out.println("waiting for TURN");
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//System.out.println("resumed TURN");
+		}
 		return this.currentPiece;
 	}
 
 
-	public void movePiece() {
-		this.currentPiece.setBounds(300, 370, 32, 32);
+	public void movePiece(int destinationIndex) {
+		int temp = this.currentPiece.getPositionIndex();
+		if(temp != -1) {
+			PositionMap map = Board.getPostionMapByIndex(temp);
+			map.removePieceFromPosition(this.currentPiece);
+		}
+		PositionMap map = Board.getPostionMapByIndex(destinationIndex);
+		if(map.countPieceInthisPosition() > 0) {
+			map.removeOpponentPieceFromPosition(this.currentPiece.getPieceColor());
+		}
+		map.addPieceToPosition(this.currentPiece);
+		int x = map.getX(), y = map.getY();
+		this.currentPiece.setPositionIndex(destinationIndex);
+		this.currentPiece.setBounds(x, y, 32, 32);
 	}
 
 	@Override
@@ -56,14 +84,16 @@ public class Turn implements MouseListener{
 		if(!this.isPieceSelected) {
 			this.isPieceSelected = true;
 			this.currentPiece = (Piece)e.getSource();
-			movePiece();
+			synchronized (Turn.this) {
+				Turn.this.notify();
+			}
 		}
 	}
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 	@Override
@@ -83,8 +113,6 @@ public class Turn implements MouseListener{
 		// TODO Auto-generated method stub
 		
 	}
-	
-	
 	
 	
 }

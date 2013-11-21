@@ -9,6 +9,7 @@ public class Ludu {
 	 */
 	public static void main(String[] args) {
 		GamePlay ludu = new GamePlay();
+		ludu.run();
 	}
 
 }

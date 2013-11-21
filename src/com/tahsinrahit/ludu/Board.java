@@ -27,7 +27,7 @@ public class Board{
     private static final int HEIGHT = 350;
     private static final int SCALE = 2;
     private static final String TITLE = "Ludu by Rahit";
-    private static PositionMap[] postionMap = new PositionMap[52];
+    private static PositionMap[] postionMap = new PositionMap[76];
     private static int[][][] pieceOrigin = new int[4][4][2];							// [color][pieceId][0 or 1] (0 for X, 1 for Y)
     
 	private JLayeredPane lpane = new JLayeredPane();
@@ -43,7 +43,7 @@ public class Board{
 	public Board() {
 		this.frame.setPreferredSize(new Dimension(WIDTH*SCALE, HEIGHT*SCALE));
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.frame.setLocationRelativeTo(null);
+		//this.frame.setLocationRelativeTo(null);
 		this.frame.setResizable(false);
 		this.frame.setLayout(new BorderLayout());
 		this.frame.add(lpane, BorderLayout.CENTER);
@@ -57,7 +57,6 @@ public class Board{
 		this.rollButton = new JButton("ROLL");
 		rollButton.setBounds(0, HEIGHT*SCALE-100, WIDTH*SCALE, 50);
 		this.lpane.add(rollButton, new Integer(1), 0);
-		//rollButton.addActionListener(this);
 		
 		this.dice = new JLabel();
 		this.dice.setFont(new Font("Arial", Font.BOLD, 50));
@@ -75,20 +74,43 @@ public class Board{
 
 	private void initPositionMap() {
 		int x = 211, y = 447;
-		for (int i = 0; i < Board.postionMap.length; i++) {
+		for (int i = 0; i < 52; i++) {
 			Board.postionMap[i] = new PositionMap(i, x, y);
+			// Setting X coordinates of the blocks
 			if( (i >= 12 && i <= 17) || i == 23 || i == 24 || (i >= 30 && i < 36) ) {
 				x += 34;
 			}
 			else if((i >= 4 && i < 10) || i == 49 || i == 50 || (i >= 38 && i <= 43)) {
 				x -= 34;
 			}
+			// Setting Y coordinates of the blocks
 			if(i <= 4 || i == 10 || i == 11 || (i >= 17 && i < 23)) {
 				y -= 34;
 			}
 			else if((i >= 25 && i <= 30) || i == 36 || i == 37 || i == 51 || (i >= 43 && i < 49)){
 				y += 34;
-			}		
+			}	
+		}
+		// setting Home lane
+		x = 211; y = 447;
+		for (int i = 52; i < Board.postionMap.length; i++) {
+			if(i >= 52 && i < 58 ) {
+				y = (i == 52) ? 447 : y - 34;
+				x = 211 + (34*1);
+			}	
+			else if(i >= 58 && i < 64) {
+				y = 447 - (34*6);
+				x = (i == 58) ? (211-(34*4)) : x + 34;
+			}
+			else if(i >= 64 && i < 70){
+				y = (i == 64) ? (447-(34*11)) : y + 34;
+				x = 211 + (34*1);
+			}
+			else if(i >= 70) {
+				y = 447 - (34*6);
+				x = (i == 70) ? (211+(34*6)) : x - 34;
+			}
+			Board.postionMap[i] = new PositionMap(i, x, y);
 		}
 	}
 	
@@ -158,18 +180,13 @@ public class Board{
 	public void setDice(String text) {
 		this.dice.setText(text);
 	}
-/*
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		turn = new Turn(this.players[0]);
-		int diceValue = turn.rollDice();
-		this.setDice(Integer.toString(diceValue));
-		Piece piece = turn.selectPiece();
-	}
-*/
 
 	public static PositionMap[] getPostionMap() {
 		return postionMap;
+	}
+
+	public static PositionMap getPostionMapByIndex(int i) {
+		return postionMap[i];
 	}
 
 
