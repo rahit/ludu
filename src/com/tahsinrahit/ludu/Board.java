@@ -5,11 +5,17 @@ package com.tahsinrahit.ludu;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -23,9 +29,8 @@ import javax.swing.JTextPane;
  */
 public class Board{
 
-    private static final int WIDTH = 350;
-    private static final int HEIGHT = 350;
-    private static final int SCALE = 2;
+    private static final int WIDTH = 700;
+    private static final int HEIGHT = 700;
     private static final String TITLE = "Ludu by Rahit";
     private static PositionMap[] postionMap = new PositionMap[76];
     private static int[][][] pieceOrigin = new int[4][4][2];							// [color][pieceId][0 or 1] (0 for X, 1 for Y)
@@ -34,33 +39,41 @@ public class Board{
 	private JButton rollButton;
 	private JLabel dice;
 	private JFrame frame = new JFrame(TITLE);
-	private Player[] players = new Player[4];
+	private LuduPlayer[] luduPlayers = new LuduPlayer[4];
 	private Turn turn;
 	
 	/**
 	 * 
 	 */
 	public Board() {
-		this.frame.setPreferredSize(new Dimension(WIDTH*SCALE, HEIGHT*SCALE));
+		this.frame.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		//this.frame.setLocationRelativeTo(null);
 		this.frame.setResizable(false);
 		this.frame.setLayout(new BorderLayout());
 		this.frame.add(lpane, BorderLayout.CENTER);
-		this.lpane.setBounds(0, 0, WIDTH*SCALE, HEIGHT*SCALE);
+		this.lpane.setBounds(0, 0, WIDTH, HEIGHT);
 		
-		JLabel courtLabel = new JLabel(new ImageIcon(this.getClass().getResource("ludu_court.png")));
-		courtLabel.setBounds(-90, -90, WIDTH*SCALE, HEIGHT*SCALE);
+		JLabel courtLabel = new JLabel(new ImageIcon(this.getClass().getResource("resources/ludu_court.png")));
+		courtLabel.setBounds(-90, -90, WIDTH, HEIGHT);
 		this.lpane.add(courtLabel, new Integer(0), 0);
 
         
 		this.rollButton = new JButton("ROLL");
-		rollButton.setBounds(0, HEIGHT*SCALE-100, WIDTH*SCALE, 50);
+		this.rollButton.setBounds(0, HEIGHT-100, WIDTH, 50);
+		Image img = null;
+		try {
+			img = ImageIO.read(getClass().getResource("resources/dice.png"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		this.rollButton.setIcon(new ImageIcon(img));
 		this.lpane.add(rollButton, new Integer(1), 0);
 		
 		this.dice = new JLabel();
 		this.dice.setFont(new Font("Arial", Font.BOLD, 50));
-		dice.setBounds(WIDTH*SCALE-100, 0, 50*SCALE, 50*SCALE);
+		dice.setBounds(WIDTH-100, 0, 50, 50);
 		this.lpane.add(dice, new Integer(1), 0);
 
 		this.initPositionMap();
@@ -161,10 +174,10 @@ public class Board{
 
 
 	public void setPlayersPiece() {
-		for (int i = 0; i < this.players.length; i++) {
-			if(this.players[i] != null) {
+		for (int i = 0; i < this.luduPlayers.length; i++) {
+			if(this.luduPlayers[i] != null) {
 				Piece[] pieces = new Piece[4];
-				pieces = this.players[i].getPieces();
+				pieces = this.luduPlayers[i].getPieces();
 		        this.lpane.add(pieces[0], new Integer(2), 0);
 		        this.lpane.add(pieces[1], new Integer(2), 0);
 		        this.lpane.add(pieces[2], new Integer(2), 0);
@@ -195,14 +208,24 @@ public class Board{
 	}
 
 
-	public Player[] getPlayers() {
-		return players;
+	public LuduPlayer[] getPlayers() {
+		return luduPlayers;
 	}
 
 
-	public void setPlayers(Player[] players) {
-		this.players = players;
+	public void setPlayers(LuduPlayer[] players) {
+		this.luduPlayers = players;
 		this.setPlayersPiece();
+	}
+
+
+	public static int getWidth() {
+		return WIDTH;
+	}
+
+
+	public static int getHeight() {
+		return HEIGHT;
 	}
 
 

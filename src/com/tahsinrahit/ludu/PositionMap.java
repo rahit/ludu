@@ -44,6 +44,12 @@ public class PositionMap {
 			}
 			i++;			
 		}
+		this.piecesInThisPosition[position].setBounds(
+				this.piecesInThisPosition[position].getOriginX(), 
+				this.piecesInThisPosition[position].getOriginY(), 
+				30, 30);
+		this.piecesInThisPosition[position].setPositionIndex(-1);
+		this.piecesInThisPosition[position].setJournyCount(0);
 		this.piecesInThisPosition[position] = this.piecesInThisPosition[i-1] ;
 		this.piecesInThisPosition[i-1] = null ;
 	}
@@ -60,8 +66,22 @@ public class PositionMap {
 				this.piecesInThisPosition[position].getOriginX(), 
 				this.piecesInThisPosition[position].getOriginY(), 
 				30, 30);
+		this.piecesInThisPosition[position].setPositionIndex(-1);
+		this.piecesInThisPosition[position].setJournyCount(0);
 		this.piecesInThisPosition[position] = this.piecesInThisPosition[i-1] ;
 		this.piecesInThisPosition[i-1] = null ;
+	}
+
+	public Piece[] getOpponentPiecesInThisPosition(Color color) {
+		Piece[] pieces = new Piece[12];
+		int i = 0, j = 0;
+		while (this.piecesInThisPosition[i] != null) {
+			if(this.piecesInThisPosition[i].getPieceColor() != color) {
+				pieces[j++] = this.piecesInThisPosition[i];
+			}
+			i++;			
+		}
+		return pieces;
 	}
 	
 	public int getId() {
