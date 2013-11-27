@@ -4,10 +4,12 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.security.SecureRandom;
 import java.security.SecureRandomSpi;
+import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.JButton;
@@ -15,20 +17,28 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 
-public class Turn implements MouseListener{
-	
+public class Turn {
+	private GamePlay gamePlay;
 	private LuduPlayer luduPlayer;
 	private Piece currentPiece;
 	private boolean isPieceSelected = true;
 	private int diceValue = 0;
 	private Piece pieceToEliminate;
-
+	
+	private MouseListener selectionListener;
+	private MouseListener selectionOptionListener;
+	private MouseListener eleminationListener;
+	
+	private boolean isPieceSelectionOptionPanelOpened = false;
+	private int pieceSelectionOptionPanelOpenedAtIndex = -1;
+	
 	public Turn() {
 		
 	}
 
-	public Turn(LuduPlayer luduPlayer) {
-		this.luduPlayer = luduPlayer;
+	public Turn(GamePlay gamePlay) {
+		this.gamePlay = gamePlay;
+		this.luduPlayer = this.gamePlay.getCurrentPlayer();
 		this.currentPiece = null;
 	}
 
@@ -37,31 +47,134 @@ public class Turn implements MouseListener{
 		while(diceValue == 0) {
 			this.diceValue = new SecureRandom().nextInt(7);
 		}
+		if(this.diceValue == 6) {
+			this.gamePlay.setRollAgain(true);
+		}
 		return this.diceValue;
 	}
 	
 	
 	public Piece selectPiece() {
 		this.isPieceSelected = false;
+		this.selectionListener = new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				super.mouseClicked(e);
+				Piece piece = (Piece)e.getSource();		
+				if(isAvailableToSelect(piece)) {
+					Turn.this.pickPiece(piece);
+				}
+			}
+		};
 		Piece[] pieces = new Piece[4];
 		pieces = this.luduPlayer.getPieces();
-		pieces[0].addMouseListener(this);
-		pieces[1].addMouseListener(this);
-		pieces[2].addMouseListener(this);
-		pieces[3].addMouseListener(this);
-
+		for (int i = 0; i < pieces.length; i++) {
+			pieces[i].addMouseListener(this.selectionListener);
+		}
+		this.initOptionSelectionListener();
 		synchronized (this) {
-			System.out.println("waiting for TURN");
 			try {
 				wait();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			System.out.println("resumed TURN");
 		}
 		return this.currentPiece;
 	}
 
+
+	protected void pickPiece(Piece piece) {
+		if(!this.isPieceSelected) {
+			this.isPieceSelected = true;
+			this.currentPiece = piece;
+			Piece[] pieces = new Piece[4];
+			pieces = Turn.this.luduPlayer.getPieces();	
+			for (int i = 0; i < pieces.length; i++) {
+				pieces[i].removeMouseListener(this.selectionListener);
+			}
+			this.removeOptionSelectionListener();
+			synchronized (this) {
+				this.notify();
+			}
+		}
+	}
+
+	protected void removeOptionSelectionListener() {
+		LuduPlayer[] luduPlayers = this.gamePlay.getBoard().getLuduPlayers(); 
+		for (int i = 0; i < 4; i++) {
+			if(luduPlayers[i] != null && luduPlayers[i] != this.luduPlayer) {
+				Piece[] tempPieces = luduPlayers[i].getPieces();
+				for (int j = 0; j < tempPieces.length; j++) {
+					if(tempPieces[j].getPositionIndex() >= 0 && tempPieces[j].getPositionIndex() < 76) {
+						tempPieces[j].removeMouseListener(this.selectionOptionListener);
+					}
+				}
+			}
+		}
+	}
+
+	private void initOptionSelectionListener() {
+		this.selectionOptionListener = new MouseAdapter() {
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				super.mouseClicked(e);
+				Piece piece = (Piece)e.getSource();		
+				PositionMap map = Board.getPostionMapByIndex(piece.getPositionIndex());
+				Piece[] pieces = map.getPiecesInThisPosition();
+				int i = 0, x = Board.getPostionMapByIndex(piece.getPositionIndex()).getX(), y = Board.getPostionMapByIndex(piece.getPositionIndex()).getY();
+				while(pieces[i] != null) {
+					if(pieces[i].getPieceColor() == Turn.this.luduPlayer.getPlayerColor()) {
+						Turn.this.pickPiece(pieces[i]);
+					}
+					i++;
+				}
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				super.mouseEntered(e);
+				Piece piece = (Piece)e.getSource();		
+				PositionMap map = Board.getPostionMapByIndex(piece.getPositionIndex());
+				Piece[] pieces = map.getPiecesInThisPosition();
+				int i = 0, x = Board.getPostionMapByIndex(piece.getPositionIndex()).getX(), y = Board.getPostionMapByIndex(piece.getPositionIndex()).getY();
+				while(pieces[i] != null) {
+					if(pieces[i] != piece) {
+						y += 31;
+						pieces[i].setPiecePosition(x, y);
+					}
+					i++;
+				}
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {
+				super.mouseExited(e);
+				Piece piece = (Piece)e.getSource();
+				if(piece.getPositionIndex() >= 0 && piece.getPositionIndex() < 76) {
+					PositionMap map = Board.getPostionMapByIndex(piece.getPositionIndex());
+					Piece[] pieces = map.getPiecesInThisPosition();
+					int i = 0, x = Board.getPostionMapByIndex(piece.getPositionIndex()).getX(), y = Board.getPostionMapByIndex(piece.getPositionIndex()).getY();
+					while(pieces[i] != null) {
+						pieces[i].setPiecePosition(x, y);
+						i++;
+					}
+				}
+			}
+		};
+		
+		LuduPlayer[] luduPlayers = this.gamePlay.getBoard().getLuduPlayers(); 
+		for (int i = 0; i < 4; i++) {
+			if(luduPlayers[i] != null && luduPlayers[i] != this.luduPlayer) {
+				Piece[] tempPieces = luduPlayers[i].getPieces();
+				for (int j = 0; j < tempPieces.length; j++) {
+					if(tempPieces[j].getPositionIndex() >= 0 && tempPieces[j].getPositionIndex() < 76) {
+						tempPieces[j].addMouseListener(this.selectionOptionListener);
+					}
+				}
+			}
+		}
+	}
 
 	public void movePiece(int destinationIndex) {
 		int currentIndex = this.currentPiece.getPositionIndex();
@@ -70,99 +183,93 @@ public class Turn implements MouseListener{
 			map.removePieceFromPosition(this.currentPiece);
 		}
 		PositionMap map = Board.getPostionMapByIndex(destinationIndex);
-		if(map.countPieceInthisPosition() > 0) {
-			//map.removeOpponentPieceFromPosition(this.currentPiece.getPieceColor());
-		}
 		map.addPieceToPosition(this.currentPiece);
 		int x = map.getX(), y = map.getY();
 		this.currentPiece.setPositionIndex(destinationIndex);
-		this.currentPiece.setBounds(x, y, 32, 32);
+		this.currentPiece.setPiecePosition(x, y);
 	}
 
 
-	public void eliminate(int destinationIndex) {
-		PositionMap map = Board.getPostionMapByIndex(destinationIndex);
+	public void eliminate(final int destinationIndex) {
+		final PositionMap map = Board.getPostionMapByIndex(destinationIndex);
 		Piece[] pieces = map.getOpponentPiecesInThisPosition(currentPiece.getPieceColor());
+		this.eleminationListener = new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				super.mouseClicked(e);
+				Piece piece = (Piece)e.getSource();		
+				Turn.this.pieceToEliminate = piece;
+				Turn.this.removeEliminateListener(destinationIndex);
+			}
+		};
 		int i = 0, y = 200;
 		while(pieces[i] != null) {
 			y += 50;
-			pieces[i].addMouseListener(this);
-			pieces[i].setBounds(Board.getWidth()-50, y, 30, 30);
+			pieces[i].addMouseListener(this.eleminationListener);
+			pieces[i].setPiecePosition(Board.getWidth()-50, y);
 			i++;
-		}
-		// TODO create condition to avoid elimination
+		}		
+		this.gamePlay.getBoard().getDoNotEliminate().setVisible(true);
+		this.gamePlay.getBoard().getDoNotEliminate().addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				Turn.this.pieceToEliminate = null;
+				Turn.this.removeEliminateListener(destinationIndex);
+			}
+		});
 		synchronized (this) {
-			System.out.println("waiting to ELIMINATE");
 			try {
 				wait();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			System.out.println("resumed ELIMINATE");
 		}
-		//this.pieceToEliminate.setBounds(this.pieceToEliminate.getOriginX(), this.pieceToEliminate.getOriginY(), 30, 30);
-		//this.pieceToEliminate.setPositionIndex(-1);
-		//this.pieceToEliminate.setJournyCount(0);
-		map.removePieceFromPosition(this.pieceToEliminate);
+		if(this.pieceToEliminate != null) {
+			map.removePieceFromPosition(this.pieceToEliminate);
+			this.pieceToEliminate.setPiecePosition(this.pieceToEliminate.getOriginX(), this.pieceToEliminate.getOriginY());
+			this.pieceToEliminate.setPositionIndex(-1);
+			this.pieceToEliminate.setJournyCount(0);
+			this.gamePlay.setRollAgain(true);
+		}
+		this.gamePlay.getBoard().getDoNotEliminate().setVisible(false);
 	}
+
+
+
+	protected void removeEliminateListener(final int destinationIndex) {
+		final PositionMap map = Board.getPostionMapByIndex(destinationIndex);
+		Piece[] pieces = map.getOpponentPiecesInThisPosition(currentPiece.getPieceColor());
+		int i = 0;
+		while(pieces[i] != null) {
+			pieces[i].setPiecePosition(map.getX(), map.getY());
+			pieces[i].removeMouseListener(this.eleminationListener);
+			i++;
+		}
+		synchronized (this) {
+			this.notify();
+		}
+	}
+
+	private boolean isAvailableToSelect(Piece piece) {
+		int currentPosition = piece.getPositionIndex();
+		if( 
+			(currentPosition != -1 && currentPosition < 76) ||
+			(currentPosition == -1 && this.diceValue == 6) ) {
+			return true;
+		}
+		return false;
+	}
+
 	
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		if(!this.isPieceSelected) {
-			this.isPieceSelected = true;
-			this.currentPiece = (Piece)e.getSource();
-			synchronized (Turn.this) {
-				Turn.this.notify();
-			}
+	public boolean isAvailableToSelect(Piece piece, int destinationIndex) {
+		int currentPosition = piece.getPositionIndex();
+		if( 
+			(currentPosition != -1 && currentPosition < 76 && (destinationIndex >= 0 && destinationIndex < 76) ) ||
+			(currentPosition == -1 && this.diceValue == 6) ) {
+			return true;
 		}
-		else {
-			this.pieceToEliminate = (Piece)e.getSource();
-			synchronized (Turn.this) {
-				Turn.this.notify();
-			}
-		}
+		return false;
 	}
-
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		Piece piece = (Piece)e.getSource();
-		if(piece.getPositionIndex() > 0 && piece.getPositionIndex() < 78) {
-			PositionMap map = Board.getPostionMapByIndex(piece.getPositionIndex());
-			Piece[] pieces = map.getPiecesInThisPosition();
-			int i = 0, x = piece.getX(), y = piece.getY();
-			while(pieces[i] != null) {
-				if(pieces[i] != piece) {
-					y += 33;
-					pieces[i].setBounds(x, y, 30, 30);
-				}
-				i++;
-			}
-		}
-	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {		
-		Piece piece = (Piece)e.getSource();
-		if(piece.getPositionIndex() > 0 && piece.getPositionIndex() < 78) {
-			PositionMap map = Board.getPostionMapByIndex(piece.getPositionIndex());
-			Piece[] pieces = map.getPiecesInThisPosition();
-			int i = 0, x = piece.getX(), y = piece.getY();
-			while(pieces[i] != null) {
-				if(!pieces[i].equals(piece)) {
-					pieces[i].setBounds(x, y, 30, 30);
-				}
-				i++;
-			}
-		}
-	}
-
-	@Override
-	public void mousePressed(MouseEvent e) {		
-	}
-
-	@Override
-	public void mouseReleased(MouseEvent e) {		
-	}
-	
 	
 }

@@ -18,9 +18,9 @@ public class LuduPlayer {
 			this.playerId = 0;
 			this.initiateYellow();
 		}
-		else if (color == Color.GREEN) {
+		else if (color == Color.BLUE) {
 			this.playerId = 1;
-			this.initiateGreen();
+			this.initiateBlue();
 		}
 		else if (color == Color.RED) {
 			this.playerId = 2;
@@ -28,8 +28,9 @@ public class LuduPlayer {
 		}
 		else {
 			this.playerId = 3;
-			this.initiateBlue();
+			this.initiateGreen();
 		}
+		this.playerColor = color;
 	}
 
 
@@ -39,6 +40,7 @@ public class LuduPlayer {
 			pieces[i] = new Piece(i, Color.YELLOW);
 			pieces[i].setOriginPosition(originPosition[0][i][0], originPosition[0][i][1]);
 			pieces[i].setBounds(originPosition[0][i][0], originPosition[0][i][1], 30, 30);
+			pieces[i].setPiecePosition(originPosition[0][i][0], originPosition[0][i][1]);
 			pieces[i].setOpaque(true);
 		}
 	}
@@ -49,6 +51,7 @@ public class LuduPlayer {
 			pieces[i] = new Piece(i, Color.BLUE);
 			pieces[i].setOriginPosition(originPosition[1][i][0], originPosition[1][i][1]);
 			pieces[i].setBounds(originPosition[1][i][0], originPosition[1][i][1], 30, 30);
+			pieces[i].setPiecePosition(originPosition[1][i][0], originPosition[1][i][1]);
 			pieces[i].setOpaque(true);
 		}
 		
@@ -60,6 +63,7 @@ public class LuduPlayer {
 			pieces[i] = new Piece(i, Color.RED);
 			pieces[i].setOriginPosition(originPosition[2][i][0], originPosition[2][i][1]);
 			pieces[i].setBounds(originPosition[2][i][0], originPosition[2][i][1], 30, 30);
+			pieces[i].setPiecePosition(originPosition[2][i][0], originPosition[2][i][1]);
 			pieces[i].setOpaque(true);
 		}		
 	}
@@ -70,9 +74,22 @@ public class LuduPlayer {
 			pieces[i] = new Piece(i, Color.GREEN);
 			pieces[i].setOriginPosition(originPosition[3][i][0], originPosition[3][i][1]);
 			pieces[i].setBounds(originPosition[3][i][0], originPosition[3][i][1], 30, 30);
+			pieces[i].setPiecePosition(originPosition[3][i][0], originPosition[3][i][1]);
 			pieces[i].setOpaque(true);
 		}		
 		
+	}
+	
+	public boolean isMoveAvailable(int diceValue) {
+		for (int i = 0; i < this.pieces.length; i++) {
+			int currentPosition = this.pieces[i].getPositionIndex();
+			if( 
+					(currentPosition != -1 && currentPosition < 80) ||
+					(currentPosition == -1 && diceValue == 6) ) {
+					return true;
+				}
+		}
+		return false;		
 	}
 
 	public Piece[] getPieces() {
@@ -86,5 +103,11 @@ public class LuduPlayer {
 	public int getPlayerId() {
 		return playerId;
 	}
+
+	public Color getPlayerColor() {
+		return playerColor;
+	}
+	
+	
 
 }

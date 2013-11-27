@@ -34,7 +34,6 @@ public class PositionMap {
 		}
 		this.piecesInThisPosition[i] = piece;
 	}
-
 	
 	public void removePieceFromPosition(Piece piece) {
 		int i = 0, position = 0;
@@ -44,17 +43,23 @@ public class PositionMap {
 			}
 			i++;			
 		}
-		this.piecesInThisPosition[position].setBounds(
-				this.piecesInThisPosition[position].getOriginX(), 
-				this.piecesInThisPosition[position].getOriginY(), 
-				30, 30);
-		this.piecesInThisPosition[position].setPositionIndex(-1);
-		this.piecesInThisPosition[position].setJournyCount(0);
 		this.piecesInThisPosition[position] = this.piecesInThisPosition[i-1] ;
 		this.piecesInThisPosition[i-1] = null ;
 	}
 	
+	public void pullPieceToTop(Color color) {
+		int i = 0, position = 0;
+		while (this.piecesInThisPosition[i] != null) {
+			if(this.piecesInThisPosition[i].getPieceColor() == color) {
+				position = i;
+				break;
+			}
+			i++;			
+		}
+	}
+	
 	public void removeOpponentPieceFromPosition(Color color) {
+		// TODO need some correction
 		int i = 0, position = 0;
 		while (this.piecesInThisPosition[i] != null) {
 			if(this.piecesInThisPosition[i].getPieceColor() != color) {
@@ -62,10 +67,10 @@ public class PositionMap {
 			}
 			i++;			
 		}
-		this.piecesInThisPosition[position].setBounds(
+		this.piecesInThisPosition[position].setPiecePosition(
 				this.piecesInThisPosition[position].getOriginX(), 
-				this.piecesInThisPosition[position].getOriginY(), 
-				30, 30);
+				this.piecesInThisPosition[position].getOriginY() 
+				);
 		this.piecesInThisPosition[position].setPositionIndex(-1);
 		this.piecesInThisPosition[position].setJournyCount(0);
 		this.piecesInThisPosition[position] = this.piecesInThisPosition[i-1] ;

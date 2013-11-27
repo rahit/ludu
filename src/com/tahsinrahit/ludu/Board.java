@@ -13,6 +13,8 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
@@ -27,7 +29,7 @@ import javax.swing.JTextPane;
  * @author Tahsin Hassan Rahit <tahsin.rahit@gmail.com>
  *
  */
-public class Board{
+public class Board {
 
     private static final int WIDTH = 700;
     private static final int HEIGHT = 700;
@@ -37,6 +39,7 @@ public class Board{
     
 	private JLayeredPane lpane = new JLayeredPane();
 	private JButton rollButton;
+	private JButton doNotEliminate;
 	private JLabel dice;
 	private JFrame frame = new JFrame(TITLE);
 	private LuduPlayer[] luduPlayers = new LuduPlayer[4];
@@ -48,13 +51,11 @@ public class Board{
 	public Board() {
 		this.frame.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		//this.frame.setLocationRelativeTo(null);
 		this.frame.setResizable(false);
-		this.frame.setLayout(new BorderLayout());
 		this.frame.add(lpane, BorderLayout.CENTER);
 		this.lpane.setBounds(0, 0, WIDTH, HEIGHT);
 		
-		JLabel courtLabel = new JLabel(new ImageIcon(this.getClass().getResource("resources/ludu_court.png")));
+		JLabel courtLabel = new JLabel(new ImageIcon(this.getClass().getResource("resources/avengers_ludu_court.png")));
 		courtLabel.setBounds(-90, -90, WIDTH, HEIGHT);
 		this.lpane.add(courtLabel, new Integer(0), 0);
 
@@ -65,11 +66,14 @@ public class Board{
 		try {
 			img = ImageIO.read(getClass().getResource("resources/dice.png"));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		this.rollButton.setIcon(new ImageIcon(img));
-		this.lpane.add(rollButton, new Integer(1), 0);
+		this.lpane.add(rollButton, new Integer(1), 0);	
+		this.doNotEliminate = new JButton("Show Mercy");
+		this.doNotEliminate.setBounds(Board.WIDTH-150, 150, 120, 30);
+		this.doNotEliminate.setVisible(false);
+		this.lpane.add(doNotEliminate, new Integer(1), -1);	
 		
 		this.dice = new JLabel();
 		this.dice.setFont(new Font("Arial", Font.BOLD, 50));
@@ -113,15 +117,15 @@ public class Board{
 			}	
 			else if(i >= 58 && i < 64) {
 				y = 447 - (34*6);
-				x = (i == 58) ? (211-(34*4)) : x + 34;
+				x = (i == 58) ? (211-(34*5)) : x + 34;
 			}
 			else if(i >= 64 && i < 70){
-				y = (i == 64) ? (447-(34*11)) : y + 34;
+				y = (i == 64) ? (447-(34*12)) : y + 34;
 				x = 211 + (34*1);
 			}
 			else if(i >= 70) {
 				y = 447 - (34*6);
-				x = (i == 70) ? (211+(34*6)) : x - 34;
+				x = (i == 70) ? (211+(34*7)) : x - 34;
 			}
 			Board.postionMap[i] = new PositionMap(i, x, y);
 		}
@@ -178,10 +182,10 @@ public class Board{
 			if(this.luduPlayers[i] != null) {
 				Piece[] pieces = new Piece[4];
 				pieces = this.luduPlayers[i].getPieces();
-		        this.lpane.add(pieces[0], new Integer(2), 0);
-		        this.lpane.add(pieces[1], new Integer(2), 0);
-		        this.lpane.add(pieces[2], new Integer(2), 0);
-		        this.lpane.add(pieces[3], new Integer(2), 0);
+		        this.lpane.add(pieces[0], new Integer(2), -1);
+		        this.lpane.add(pieces[1], new Integer(2), -1);
+		        this.lpane.add(pieces[2], new Integer(2), -1);
+		        this.lpane.add(pieces[3], new Integer(2), -1);
 			}
 		}
 	}
@@ -231,6 +235,37 @@ public class Board{
 
 	public JButton getRollButton() {
 		return rollButton;
+	}
+
+
+	public void setPlayers(ArrayList<LuduPlayer> luduPlayers) {
+		int i = 0;
+		for (Iterator iterator = luduPlayers.iterator(); iterator.hasNext();) {
+			LuduPlayer luduPlayer = (LuduPlayer) iterator.next();
+			this.luduPlayers[i] = luduPlayer;
+			i++;
+		}		
+		this.setPlayersPiece();
+	}
+
+
+	public JLayeredPane getLpane() {
+		return lpane;
+	}
+
+
+	public LuduPlayer[] getLuduPlayers() {
+		return luduPlayers;
+	}
+
+
+	public JFrame getFrame() {
+		return frame;
+	}
+
+
+	public JButton getDoNotEliminate() {
+		return doNotEliminate;
 	}
 
 	

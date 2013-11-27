@@ -9,17 +9,18 @@ import java.awt.Graphics;
 import java.beans.Transient;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 
 /**
  * @author Tahsin Hassan Rahit <tahsin.rahit@gmail.com>
  *
  */
-public class Piece extends JButton implements Cloneable{
+public class Piece extends JButton {
 
 	private final int DIAMETRE = 28;
 	private int pieceId;
 	private Color pieceColor;
-	private int journyCount = 0;
+	private int journyCount;
 	private int positionIndex = -1;
 	private int originX = 0;
 	private int originY = 0;
@@ -44,6 +45,7 @@ public class Piece extends JButton implements Cloneable{
 		this.y = 0;
 		this.currentX = 0;
 		this.currentY = 0;
+		this.journyCount = 0;
 	}
 	
 	/**
@@ -55,6 +57,10 @@ public class Piece extends JButton implements Cloneable{
 		this.pieceColor = pieceColor;
 		this.positionIndex = -1;
 		this.journyCount = 0;
+		this.x = 0;
+		this.y = 0;
+		this.currentX = 0;
+		this.currentY = 0;
 		this.setBackground(pieceColor.darker());
 	}
 
@@ -63,10 +69,10 @@ public class Piece extends JButton implements Cloneable{
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		g.setColor(this.pieceColor);
-		g.fillOval(this.x, this.y, this.DIAMETRE, this.DIAMETRE);
+		g.fillOval(0, 0, this.DIAMETRE, this.DIAMETRE);
 		g.setColor(Color.BLACK);
-		g.drawLine((int)((this.x+DIAMETRE)/2), this.y, (int)((this.x+DIAMETRE)/2), this.y+DIAMETRE);
-		g.drawLine(this.x, (int)((this.y+DIAMETRE)/2), this.x+DIAMETRE, (int)((this.y+DIAMETRE)/2));
+		g.drawLine((int)((this.DIAMETRE)/2), 0, (int)((this.DIAMETRE)/2), this.DIAMETRE);
+		g.drawLine(0, (int)((this.DIAMETRE)/2), this.DIAMETRE, (int)((this.DIAMETRE)/2));
 	}
 
 	
@@ -96,6 +102,7 @@ public class Piece extends JButton implements Cloneable{
 		this.y = y;
 		this.currentX = x;
 		this.currentY = y;
+		this.setLocation(this.x, this.y);
 	}
 
 	@Override
