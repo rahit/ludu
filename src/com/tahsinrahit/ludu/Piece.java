@@ -9,7 +9,6 @@ import java.awt.Graphics;
 import java.beans.Transient;
 
 import javax.swing.JButton;
-import javax.swing.JComponent;
 
 /**
  * @author Tahsin Hassan Rahit <tahsin.rahit@gmail.com>
@@ -17,6 +16,11 @@ import javax.swing.JComponent;
  */
 public class Piece extends JButton {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private final int DIAMETRE = 28;
 	private int pieceId;
 	private Color pieceColor;
@@ -34,11 +38,7 @@ public class Piece extends JButton {
 	 * 1 = active on board
 	 * 100 = In home
 	 */
-	private int state = -1;
 	
-	/**
-	 * 
-	 */
 	public Piece() {
 		super();
 		this.x = 0;
@@ -148,6 +148,22 @@ public class Piece extends JButton {
 
 	public int getOriginY() {
 		return originY;
+	}
+
+	public int getCurrentX() {
+		return currentX;
+	}
+
+	public void setCurrentX(int currentX) {
+		this.currentX = currentX;
+	}
+
+	public int getCurrentY() {
+		return currentY;
+	}
+
+	public void setCurrentY(int currentY) {
+		this.currentY = currentY;
 	}
 	
 }

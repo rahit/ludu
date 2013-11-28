@@ -7,12 +7,18 @@ public class LuduPlayer {
 	private Color playerColor;
 	private int playerId;
 	private Piece[] pieces = new Piece[4];
+	private String playerName;
 
 	public LuduPlayer() {
 		// TODO Auto-generated constructor stub
 	}
 	
 	public LuduPlayer(Color color) {
+		this(color, "Unknown");
+	}
+	
+
+	public LuduPlayer(Color color, String playerName) {
 		Board.initpieceOrigin();
 		if(color == Color.YELLOW) {
 			this.playerId = 0;
@@ -31,9 +37,11 @@ public class LuduPlayer {
 			this.initiateGreen();
 		}
 		this.playerColor = color;
+		this.playerName = playerName;
 	}
-
-
+	
+	
+	
 	public void initiateYellow() {
 		int[][][] originPosition = Board.getPieceOrigin();
 		for (int i = 0; i < 4; i++) {
@@ -79,18 +87,6 @@ public class LuduPlayer {
 		}		
 		
 	}
-	
-	public boolean isMoveAvailable(int diceValue) {
-		for (int i = 0; i < this.pieces.length; i++) {
-			int currentPosition = this.pieces[i].getPositionIndex();
-			if( 
-					(currentPosition != -1 && currentPosition < 80) ||
-					(currentPosition == -1 && diceValue == 6) ) {
-					return true;
-				}
-		}
-		return false;		
-	}
 
 	public Piece[] getPieces() {
 		return pieces;
@@ -106,6 +102,14 @@ public class LuduPlayer {
 
 	public Color getPlayerColor() {
 		return playerColor;
+	}
+
+	public String getPlayerName() {
+		return playerName;
+	}
+
+	public void setPlayerName(String playerName) {
+		this.playerName = playerName;
 	}
 	
 	

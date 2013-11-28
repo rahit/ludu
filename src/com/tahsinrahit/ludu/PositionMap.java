@@ -47,7 +47,7 @@ public class PositionMap {
 		this.piecesInThisPosition[i-1] = null ;
 	}
 	
-	public void pullPieceToTop(Color color) {
+	/*public void pullPieceToTop(Color color) {
 		int i = 0, position = 0;
 		while (this.piecesInThisPosition[i] != null) {
 			if(this.piecesInThisPosition[i].getPieceColor() == color) {
@@ -56,7 +56,7 @@ public class PositionMap {
 			}
 			i++;			
 		}
-	}
+	}*/
 	
 	public void removeOpponentPieceFromPosition(Color color) {
 		// TODO need some correction

@@ -4,26 +4,17 @@
 package com.tahsinrahit.ludu;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.imageio.ImageIO;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
-import javax.swing.JTextPane;
 
 /**
  * @author Tahsin Hassan Rahit <tahsin.rahit@gmail.com>
@@ -33,61 +24,75 @@ public class Board {
 
     private static final int WIDTH = 700;
     private static final int HEIGHT = 700;
-    private static final String TITLE = "Ludu by Rahit";
     private static PositionMap[] postionMap = new PositionMap[76];
     private static int[][][] pieceOrigin = new int[4][4][2];							// [color][pieceId][0 or 1] (0 for X, 1 for Y)
-    
-	private JLayeredPane lpane = new JLayeredPane();
-	private JButton rollButton;
+    private static LuduCourt luduCourt;
+        
+    private GameFrame gameFrame;
+	private JLayeredPane lpane;
 	private JButton doNotEliminate;
-	private JLabel dice;
-	private JFrame frame = new JFrame(TITLE);
+	private JButton dice;
+	private JLabel status;
 	private LuduPlayer[] luduPlayers = new LuduPlayer[4];
-	private Turn turn;
 	
-	/**
-	 * 
-	 */
+
 	public Board() {
-		this.frame.setPreferredSize(new Dimension(WIDTH, HEIGHT));
-		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.frame.setResizable(false);
-		this.frame.add(lpane, BorderLayout.CENTER);
+		// TODO Auto-generated constructor stub
+	}
+	
+	public Board(GameFrame gameFrame, LuduCourt luduCourt) {
+		this.gameFrame = gameFrame;
+		this.lpane = new JLayeredPane();
+		this.gameFrame.setlPane(this.lpane);
+		this.gameFrame.add(lpane, BorderLayout.CENTER);
 		this.lpane.setBounds(0, 0, WIDTH, HEIGHT);
 		
-		JLabel courtLabel = new JLabel(new ImageIcon(this.getClass().getResource("resources/avengers_ludu_court.png")));
-		courtLabel.setBounds(-90, -90, WIDTH, HEIGHT);
-		this.lpane.add(courtLabel, new Integer(0), 0);
+		this.initCourt(luduCourt);
+		this.initDice();
+		this.initDoNotEliminateButton();
+		this.initStatus();
+		this.initPositionMap();
+		Board.initpieceOrigin();
+		
+        this.gameFrame.pack();       
 
-        
-		this.rollButton = new JButton("ROLL");
-		this.rollButton.setBounds(0, HEIGHT-100, WIDTH, 50);
+	}
+
+	private void initStatus() {
+		this.status = new JLabel();
+		this.status.setFont(new Font("Arial", Font.BOLD, 20));
+		this.status.setBounds(50, Board.HEIGHT-200, Board.WIDTH-50, 150);
+		this.lpane.add(this.status, new Integer(1), 0);
+	}
+
+	private void initDoNotEliminateButton() {
+		this.doNotEliminate = new JButton("Show Mercy");
+		this.doNotEliminate.setBounds(Board.WIDTH-150, 150, 120, 30);
+		this.doNotEliminate.setVisible(false);
+		this.lpane.add(doNotEliminate, new Integer(1), -1);	
+	}
+
+	private void initDice() {
+		this.dice = new JButton();
+		//this.dice.setFont(new Font("Arial", Font.BOLD, 50));
+		this.dice.setBounds(WIDTH-150, 0, 120, 120);
 		Image img = null;
 		try {
 			img = ImageIO.read(getClass().getResource("resources/dice.png"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		this.rollButton.setIcon(new ImageIcon(img));
-		this.lpane.add(rollButton, new Integer(1), 0);	
-		this.doNotEliminate = new JButton("Show Mercy");
-		this.doNotEliminate.setBounds(Board.WIDTH-150, 150, 120, 30);
-		this.doNotEliminate.setVisible(false);
-		this.lpane.add(doNotEliminate, new Integer(1), -1);	
-		
-		this.dice = new JLabel();
-		this.dice.setFont(new Font("Arial", Font.BOLD, 50));
-		dice.setBounds(WIDTH-100, 0, 50, 50);
+		this.dice.setIcon(new ImageIcon(img));
 		this.lpane.add(dice, new Integer(1), 0);
-
-		this.initPositionMap();
-		Board.initpieceOrigin();
-		
-        frame.pack();
-        
-
 	}
 
+
+	private void initCourt(LuduCourt luduCourt) {		
+		Board.luduCourt = luduCourt;
+		JLabel courtLabel = new JLabel(new ImageIcon(this.getClass().getResource("resources/"+Board.luduCourt.getCourtFileName()+".png")));
+		courtLabel.setBounds(-90, -90, WIDTH, HEIGHT);
+		this.lpane.add(courtLabel, new Integer(0), 0);
+	}
 
 	private void initPositionMap() {
 		int x = 211, y = 447;
@@ -190,12 +195,14 @@ public class Board {
 		}
 	}
 	
-	public void showFrame() {
-        frame.setVisible(true);
-	}
-	
 	public void setDice(String text) {
-		this.dice.setText(text);
+		Image img = null;
+		try {
+			img = ImageIO.read(getClass().getResource("resources/dice/"+text+".png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		this.dice.setIcon(new ImageIcon(img));
 	}
 
 	public static PositionMap[] getPostionMap() {
@@ -223,24 +230,9 @@ public class Board {
 	}
 
 
-	public static int getWidth() {
-		return WIDTH;
-	}
-
-
-	public static int getHeight() {
-		return HEIGHT;
-	}
-
-
-	public JButton getRollButton() {
-		return rollButton;
-	}
-
-
 	public void setPlayers(ArrayList<LuduPlayer> luduPlayers) {
 		int i = 0;
-		for (Iterator iterator = luduPlayers.iterator(); iterator.hasNext();) {
+		for (Iterator<LuduPlayer> iterator = luduPlayers.iterator(); iterator.hasNext();) {
 			LuduPlayer luduPlayer = (LuduPlayer) iterator.next();
 			this.luduPlayers[i] = luduPlayer;
 			i++;
@@ -254,20 +246,40 @@ public class Board {
 	}
 
 
+	public static int getWidth() {
+		return Board.WIDTH;
+	}
+
+
+	public static int getHeight() {
+		return Board.HEIGHT;
+	}
+
+
 	public LuduPlayer[] getLuduPlayers() {
 		return luduPlayers;
 	}
 
-
-	public JFrame getFrame() {
-		return frame;
+	
+	public GameFrame getGameFrame() {
+		return gameFrame;
 	}
-
 
 	public JButton getDoNotEliminate() {
 		return doNotEliminate;
 	}
 
+	public JButton getDice() {
+		return dice;
+	}
+
+	public void setDice(JButton dice) {
+		this.dice = dice;
+	}
+
+	public JLabel getStatus() {
+		return status;
+	}
 	
 
 }

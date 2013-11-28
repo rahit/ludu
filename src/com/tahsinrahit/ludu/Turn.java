@@ -1,20 +1,11 @@
 package com.tahsinrahit.ludu;
 
-import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.security.SecureRandom;
-import java.security.SecureRandomSpi;
-import java.util.ArrayList;
-import java.util.Random;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 
 public class Turn {
@@ -28,9 +19,6 @@ public class Turn {
 	private MouseListener selectionListener;
 	private MouseListener selectionOptionListener;
 	private MouseListener eleminationListener;
-	
-	private boolean isPieceSelectionOptionPanelOpened = false;
-	private int pieceSelectionOptionPanelOpenedAtIndex = -1;
 	
 	public Turn() {
 		
@@ -124,7 +112,8 @@ public class Turn {
 				Piece[] pieces = map.getPiecesInThisPosition();
 				int i = 0, x = Board.getPostionMapByIndex(piece.getPositionIndex()).getX(), y = Board.getPostionMapByIndex(piece.getPositionIndex()).getY();
 				while(pieces[i] != null) {
-					if(pieces[i].getPieceColor() == Turn.this.luduPlayer.getPlayerColor()) {
+					pieces[i].setPiecePosition(x, y);
+					if(!Turn.this.isPieceSelected && pieces[i].getPieceColor() == Turn.this.luduPlayer.getPlayerColor()) {
 						Turn.this.pickPiece(pieces[i]);
 					}
 					i++;
@@ -142,6 +131,7 @@ public class Turn {
 					if(pieces[i] != piece) {
 						y += 31;
 						pieces[i].setPiecePosition(x, y);
+						Turn.this.gamePlay.getBoard().getStatus().setText("Click to select your piece in this position");
 					}
 					i++;
 				}
@@ -160,6 +150,7 @@ public class Turn {
 						i++;
 					}
 				}
+				Turn.this.gamePlay.getBoard().getStatus().setText(Turn.this.luduPlayer.getPlayerName() + "'s turn");
 			}
 		};
 		
@@ -191,6 +182,7 @@ public class Turn {
 
 
 	public void eliminate(final int destinationIndex) {
+		this.gamePlay.getBoard().getStatus().setText("You've got a chance to eliminate 1 piece of your opponent");
 		final PositionMap map = Board.getPostionMapByIndex(destinationIndex);
 		Piece[] pieces = map.getOpponentPiecesInThisPosition(currentPiece.getPieceColor());
 		this.eleminationListener = new MouseAdapter() {
@@ -233,6 +225,7 @@ public class Turn {
 			this.gamePlay.setRollAgain(true);
 		}
 		this.gamePlay.getBoard().getDoNotEliminate().setVisible(false);
+		this.gamePlay.getBoard().getStatus().setText(this.luduPlayer.getPlayerName() + "'s turn");
 	}
 
 

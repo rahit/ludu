@@ -1,67 +1,105 @@
 package com.tahsinrahit.ludu;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.reflect.Array;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.Vector;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.ImageIcon;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.WindowConstants;
 
-import javazoom.jl.player.Player;
 
-public class GamePlay{
-	private final String diceRollSoundFileName = "dice.mp3";
+public class GamePlay implements Runnable{
+	private LuduCourt luduCourt;
+	private GameFrame mainGameFrame;
 	
 	private static boolean isGameFinished = false;
 	private boolean isProcessRunning = false;
 	private boolean isRollAgain;
 	private LuduPlayer currentPlayer;
-	private Board board = new Board();
-	private ArrayList<LuduPlayer>luduPlayers = new ArrayList<LuduPlayer>();
+	private Board board;
+	private ArrayList<LuduPlayer>luduPlayers;
+	private ArrayList<LuduPlayer>winners;
 	private Turn turn;
 	private int diceValue = 0;
 	
+	private GameOptionSelectionPanel gameOptionSelectionPanel;
+	
 	public GamePlay() {
-		super();
+		// TODO Auto-generated constructor stub
+	}
+	
+	public GamePlay(GameFrame mainGameFrame) {
+		this.mainGameFrame = mainGameFrame;
 		GamePlay.isGameFinished = false;
 		this.isProcessRunning = false;
-		this.board = new Board();
-		//new Thread(new GameMusic("mystic_river.mp3")).start();
+		this.luduPlayers = new ArrayList<LuduPlayer>(4);
+		this.selectGameOption();
+		this.board = new Board(this.mainGameFrame, this.luduCourt);
+		new Thread(new GameMusic("halo_theme.mp3", true)).start();
 		Board.initpieceOrigin();        
-		this.luduPlayers.add(new LuduPlayer(Color.YELLOW));
-		this.luduPlayers.add(new LuduPlayer(Color.BLUE));
-		this.luduPlayers.add(new LuduPlayer(Color.RED));
-		this.luduPlayers.add(new LuduPlayer(Color.GREEN));
 		this.board.setPlayers(this.luduPlayers);
 		this.currentPlayer = this.luduPlayers.get(0);
-        board.showFrame();
+		this.winners = new ArrayList<LuduPlayer>(4);
 	}
+
+
+	private void selectGameOption() {
+		this.gameOptionSelectionPanel = new GameOptionSelectionPanel();
+		this.mainGameFrame.add(this.gameOptionSelectionPanel);
+		this.mainGameFrame.pack();
+		this.gameOptionSelectionPanel.getStartButton().addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(GamePlay.this.gameOptionSelectionPanel.isSetPlayers()) {
+					GamePlay.this.luduPlayers = GamePlay.this.gameOptionSelectionPanel.getLuduPlayers();
+					GamePlay.this.luduCourt = GamePlay.this.gameOptionSelectionPanel.getLuduCourt();
+					GamePlay.this.gameOptionSelectionPanel.setVisible(false);
+					synchronized (GamePlay.this) {
+						GamePlay.this.notify();
+					}
+				}
+			}
+		});
+
+		synchronized (this) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}	
+	}
+
+	
+	
 
 	public void run() {
 		int i = 0;
-		while (!isGameFinished) {
+		while (!GamePlay.isGameFinished) {
 			this.isRollAgain = false;
 			this.currentPlayer = this.luduPlayers.get(i);
 			this.turn = new Turn(this);
-			this.board.getRollButton().addActionListener(new ActionListener() {
+			this.board.getStatus().setText(this.currentPlayer.getPlayerName() + "'s turn");
+			ActionListener rollActionListener = new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					if(!GamePlay.this.isProcessRunning) {
 						GamePlay.this.roll();
 					}
-					GamePlay.this.board.getRollButton().removeActionListener(this);
+					GamePlay.this.board.getDice().removeActionListener(this);
 				}
-			});
+			};
+			this.board.getDice().addActionListener(rollActionListener);
 			synchronized (this) {
 				try {
 					wait();
@@ -69,9 +107,16 @@ public class GamePlay{
 					e.printStackTrace();
 				}
 			}	
-			this.board.getRollButton().addActionListener(null);
-			if(this.currentPlayer.isMoveAvailable(this.diceValue)) {
+			this.board.getDice().removeActionListener(rollActionListener);
+			if(this.isMoveAvailable()) {
 				this.move();
+			}
+			if(this.isPlayerFinished()) {
+				this.removePlayerFromList();
+			}
+			if(this.luduPlayers.size() == 1) {
+				this.winners.add(this.luduPlayers.get(0));
+				GamePlay.isGameFinished = true;
 			}
 			if(!this.isRollAgain) {
 				i++;
@@ -81,7 +126,66 @@ public class GamePlay{
 			}
 			GamePlay.this.isProcessRunning = false;
 		}
+		this.announceWinner();
+	}
 
+	private void announceWinner() {
+		JDialog dialog = new JDialog(this.mainGameFrame, "We have a winner...", true);
+		dialog.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		dialog.setMinimumSize(new Dimension(this.mainGameFrame.getHeight(), this.mainGameFrame.getHeight()));	
+		dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);	
+		dialog.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				super.windowClosed(e);
+				synchronized (GamePlay.this.mainGameFrame) {
+					GamePlay.this.mainGameFrame.notify();
+				}
+			}
+		});
+		
+		JPanel championPanel = new JPanel();
+		JPanel textPanel = new JPanel();
+		
+		textPanel.setLayout(new  FlowLayout(FlowLayout.CENTER, 100, 0));
+		
+		JLabel champion = new JLabel(new ImageIcon(this.getClass().getResource("resources/"+this.luduCourt.getCourtFileName()+"/"+this.winners.get(0).getPlayerId()+".png")));
+		championPanel.add(champion);
+		
+		JLabel championLabel = new JLabel("Congratulations " + this.winners.get(0).getPlayerName());
+		championLabel.setFont(new Font("Arial", Font.BOLD, 30));
+
+		textPanel.add(championLabel);
+		
+		dialog.add(championPanel);
+		dialog.add(textPanel);
+		dialog.setVisible(true);
+	}
+
+	private boolean isMoveAvailable() {
+		Piece[] pieces = this.currentPlayer.getPieces();
+		for (int i = 0; i < pieces.length; i++) {
+			int destinationIndex = this.calculateNextPosition(pieces[i], this.diceValue);
+			if(this.turn.isAvailableToSelect(pieces[i], destinationIndex)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void removePlayerFromList() {
+		this.winners.add(this.currentPlayer);
+		this.luduPlayers.remove(this.currentPlayer);
+	}
+
+	private boolean isPlayerFinished() {
+		Piece[] pieces = this.currentPlayer.getPieces();
+		for (int i = 0; i < pieces.length; i++) {
+			if(pieces[i].getJournyCount() < 57 ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private boolean isEliminationAvailable(Piece currentPiece, int destinationIndex) {
@@ -116,6 +220,7 @@ public class GamePlay{
 			destinationIndex =  this.calculateNextPosition(currentPiece, this.diceValue);
 		} while (!this.turn.isAvailableToSelect(currentPiece, destinationIndex));
 		if(this.isEliminationAvailable(currentPiece, destinationIndex)) {
+			this.board.getStatus().setText("You've got a chance to eliminate 1 piece of your opponent");
 			this.turn.eliminate(destinationIndex);
 		}
 		int tempDiceValue = (currentPiece.getPositionIndex() == -1) ? 1 : this.diceValue;
@@ -158,7 +263,6 @@ public class GamePlay{
 			else if(currentPiece.getPieceColor() == Color.GREEN) {
 				currentPosition = 39;
 			}
-			//currentPosition += positionToAdvance;
 		}
 		else if (currentPosition + positionToAdvance >= 52 && tempJournyCount < 51) {
 			// Passing array bound for main line
